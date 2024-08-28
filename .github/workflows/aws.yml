@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy
+    name: Deploy to EC2
     runs-on: ubuntu-latest
 
     steps:
@@ -19,22 +19,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.AWS_SSH_INSTANCE_KEY }}
 
-      - name: Configure Git with PAT
-        env:
-          GITHUB_PAT: ${{ secrets.GIT_PAT }}
-        run: |
-          echo "https://${GITHUB_PAT}:x-oauth-basic@github.com" > ~/.git-credentials
-          git config --global credential.helper store
-
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_DNS }} '
-            # Navigate to the project directory and perform Git operations
-            cd /home/ubuntu/backend
-            git pull origin main
-            source venv/bin/activate
-            pip install -r requirements.txt
+            cd /home/ubuntu/backend &&
+            git pull origin main &&
+            source venv/bin/activate &&
+            pip install -r requirements.txt &&
             sudo systemctl restart your-app-service
           '
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh-agent.sock
